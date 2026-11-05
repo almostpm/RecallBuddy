@@ -1,0 +1,17 @@
+{
+    "session_start": "2026-11-05T14:47:00.687429",
+    "attempts": [
+        {
+            "timestamp": "2026-11-05T14:47:34.530377",
+            "topic": "Which method is NOT used for communication between runnable components in the described AI Agent?",
+            "question": "Which method is NOT used for communication between runnable components in the described AI Agent?",
+            "is_correct": false
+        },
+        {
+            "timestamp": "2026-11-05T14:47:44.031876",
+            "topic": "Which component in the ReAct framework retrieves relevant text chunks using cosine similarity matching?",
+            "question": "Which component in the ReAct framework retrieves relevant text chunks using cosine similarity matching?",
+            "is_correct": false
+        }
+    ]
+}

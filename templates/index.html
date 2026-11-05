@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RecallBuddy — AI Digital Tutor & Quiz Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        black: '#000000',
+                        white: '#ffffff',
+                    },
+                    fontFamily: {
+                        sans: ['Space Grotesk', 'sans-serif'],
+                        mono: ['Space Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0d0d0d;
+            color: #000000;
+            font-family: 'Space Grotesk', sans-serif;
+            background-image: radial-gradient(#222 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        /* Custom Stark Monochrome Utilities */
+        .stark-border {
+            border: 2px solid #000000;
+        }
+        .stark-border-sm {
+            border: 1px solid #000000;
+        }
+        .stark-shadow {
+            box-shadow: 4px 4px 0px #000000;
+        }
+        .stark-shadow-sm {
+            box-shadow: 2px 2px 0px #000000;
+        }
+        .stark-shadow-lg {
+            box-shadow: 8px 8px 0px #000000;
+        }
+        .stark-shadow-hover:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0px #000000;
+        }
+        .stark-btn {
+            background-color: #000000;
+            color: #ffffff;
+            border: 2px solid #000000;
+            font-weight: 600;
+            transition: all 0.15s ease;
+        }
+        .stark-btn:hover {
+            background-color: #ffffff;
+            color: #000000;
+            box-shadow: 4px 4px 0px #000000;
+        }
+        .stark-btn-outline {
+            background-color: #ffffff;
+            color: #000000;
+            border: 2px solid #000000;
+            font-weight: 600;
+            transition: all 0.15s ease;
+        }
+        .stark-btn-outline:hover {
+            background-color: #000000;
+            color: #ffffff;
+            box-shadow: 4px 4px 0px #000000;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #ffffff;
+            border-left: 2px solid #000000;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #000000;
+        }
+
+        /* Pulsing SVG line animations */
+        @keyframes orbit {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-orbit {
+            animation: orbit 20s linear infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-3 md:p-6 flex flex-col items-center justify-center">
+
+    <!-- MAIN MAC-STYLE DESKTOP WINDOW CONTAINER -->
+    <div class="w-full max-w-6xl bg-white stark-border stark-shadow-lg rounded-xl overflow-hidden flex flex-col my-auto">
+        
+        <!-- WINDOW HEADER BAR (MAC OS TRAFFIC LIGHTS + BROWSER ADDRESS BAR) -->
+        <div class="bg-white border-b-2 border-black px-4 py-3 flex flex-wrap items-center justify-between gap-3 select-none">
+            
+            <!-- Window Control Dots -->
+            <div class="flex items-center gap-2">
+                <div class="w-3.5 h-3.5 rounded-full bg-black border border-black hover:opacity-70 cursor-pointer" title="Close"></div>
+                <div class="w-3.5 h-3.5 rounded-full bg-white border-2 border-black hover:bg-black transition-colors cursor-pointer" title="Minimize"></div>
+                <div class="w-3.5 h-3.5 rounded-full bg-white border-2 border-black hover:bg-black transition-colors cursor-pointer" title="Maximize"></div>
+                <span class="ml-2 font-mono text-xs font-bold tracking-wider uppercase hidden sm:inline-block">RecallBuddy OS v2.4</span>
+            </div>
+
+            <!-- Browser Address Bar Mockup -->
+            <div class="flex-1 max-w-md mx-auto bg-white stark-border px-3 py-1 flex items-center justify-between gap-2 rounded text-xs font-mono">
+                <div class="flex items-center gap-2 overflow-hidden">
+                    <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                    <span class="truncate font-semibold">https://recallbuddy.ai/workspace/tutor</span>
+                </div>
+                <span class="bg-black text-white px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-widest">SECURE</span>
+            </div>
+
+            <!-- Status Indicator -->
+            <div class="flex items-center gap-2 font-mono text-xs">
+                <span class="w-2.5 h-2.5 rounded-full bg-black animate-pulse"></span>
+                <span class="font-bold">ACTIVE TUTOR</span>
+            </div>
+        </div>
+
+        <!-- APP NAVIGATION BAR -->
+        <nav class="bg-white border-b-2 border-black px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+            <!-- Logo with Custom Monochrome Space / Brain SVG Icon -->
+            <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('hero')">
+                <div class="w-9 h-9 bg-black text-white flex items-center justify-center rounded stark-border">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-bold text-xl tracking-tight uppercase font-mono">RecallBuddy</h1>
+                    <p class="text-[10px] font-mono leading-none tracking-widest uppercase text-gray-600">Personal AI Digital Tutor</p>
+                </div>
+            </div>
+
+            <!-- Nav Links -->
+            <div class="flex items-center gap-2 font-mono text-xs font-bold">
+                <button onclick="switchTab('workspace')" id="nav-workspace" class="px-3 py-1.5 border-2 border-black bg-black text-white rounded transition-all">QUIZ ENGINE</button>
+                <button onclick="switchTab('features')" id="nav-features" class="px-3 py-1.5 border-2 border-transparent hover:border-black rounded transition-all">HOW IT WORKS</button>
+                <button onclick="switchTab('analytics')" id="nav-analytics" class="px-3 py-1.5 border-2 border-transparent hover:border-black rounded transition-all">ANALYTICS</button>
+                <button onclick="switchTab('settings')" id="nav-settings" class="px-3 py-1.5 border-2 border-transparent hover:border-black rounded transition-all flex items-center gap-1">
+                    <span>CONFIG</span>
+                    <span class="w-2 h-2 rounded-full border border-black bg-white"></span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- CONTENT AREA -->
+        <div class="p-6 md:p-8 bg-white min-h-[580px] flex flex-col justify-between">
+
+            <!-- SECTION 1: HERO & OVERVIEW -->
+            <div id="tab-hero" class="space-y-8">
+                <!-- Hero Header -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center border-b-2 border-black pb-8">
+                    <div class="lg:col-span-7 space-y-4">
+                        <div class="inline-block bg-black text-white px-3 py-1 font-mono text-xs font-bold uppercase tracking-wider">
+                            Active Testing over Passive Reading
+                        </div>
+                        <h2 class="text-3xl md:text-5xl font-black uppercase tracking-tight leading-none">
+                            Turn dense notes into instant quiz games.
+                        </h2>
+                        <p class="text-base md:text-lg font-medium text-gray-800 leading-relaxed max-w-xl">
+                            Instead of letting your eyes glide passively over text, RecallBuddy instantly turns articles, textbooks, and notes into an active trivia game to force permanent memory storage.
+                        </p>
+                        
+                        <div class="flex flex-wrap gap-4 pt-2">
+                            <button onclick="switchTab('workspace')" class="stark-btn px-6 py-3 text-sm tracking-wider uppercase flex items-center gap-2">
+                                <span>Start Quiz Generator</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                                </svg>
+                            </button>
+                            <button onclick="switchTab('settings')" class="stark-btn-outline px-6 py-3 text-sm tracking-wider uppercase font-mono">
+                                Set AI Model / Files
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Hero Space/Monochrome Visual Artwork -->
+                    <div class="lg:col-span-5 flex justify-center">
+                        <div class="w-full max-w-xs bg-white stark-border stark-shadow p-6 flex flex-col items-center text-center space-y-4 relative overflow-hidden">
+                            <!-- Monochrome Space Line Art SVG -->
+                            <div class="w-32 h-32 relative flex items-center justify-center">
+                                <svg class="w-full h-full animate-orbit" viewBox="0 0 100 100" fill="none" stroke="currentColor">
+                                    <circle cx="50" cy="50" r="45" stroke="black" stroke-width="1.5" stroke-dasharray="4 4" />
+                                    <ellipse cx="50" cy="50" rx="40" ry="15" stroke="black" stroke-width="2" transform="rotate(-20 50 50)" />
+                                </svg>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <svg class="w-14 h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 4a6 6 0 100 12 6 6 0 000-12z" />
+                                        <circle cx="12" cy="12" r="2" fill="black" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-sm uppercase font-mono">Active Recall Loop</h3>
+                                <p class="text-xs text-gray-600 mt-1 font-mono">Read → Test → Explain → Retain</p>
+                            </div>
+                            <div class="w-full bg-black text-white text-[11px] font-mono py-1 font-bold uppercase">
+                                100% Free & Open Option Available
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4 Key Pillars -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="p-4 bg-white stark-border stark-shadow-sm space-y-2">
+                        <div class="w-8 h-8 bg-black text-white font-mono font-bold flex items-center justify-center text-sm">01</div>
+                        <h4 class="font-bold text-sm uppercase">Forces Active Thought</h4>
+                        <p class="text-xs text-gray-700">Stops your brain from gliding over text by prompting direct questions based on recent material.</p>
+                    </div>
+
+                    <div class="p-4 bg-white stark-border stark-shadow-sm space-y-2">
+                        <div class="w-8 h-8 bg-black text-white font-mono font-bold flex items-center justify-center text-sm">02</div>
+                        <h4 class="font-bold text-sm uppercase">Stops Wasting Time</h4>
+                        <p class="text-xs text-gray-700">Pinpoints your specific knowledge gaps so you don't re-read entire chapters needlessly.</p>
+                    </div>
+
+                    <div class="p-4 bg-white stark-border stark-shadow-sm space-y-2">
+                        <div class="w-8 h-8 bg-black text-white font-mono font-bold flex items-center justify-center text-sm">03</div>
+                        <h4 class="font-bold text-sm uppercase">Instant Explanations</h4>
+                        <p class="text-xs text-gray-700">Explains incorrect answers immediately in simple, plain language on the spot.</p>
+                    </div>
+
+                    <div class="p-4 bg-white stark-border stark-shadow-sm space-y-2">
+                        <div class="w-8 h-8 bg-black text-white font-mono font-bold flex items-center justify-center text-sm">04</div>
+                        <h4 class="font-bold text-sm uppercase">Brain Fitness Tracker</h4>
+                        <p class="text-xs text-gray-700">Tracks performance over time, showing exactly how much smarter you get each day.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 2: WORKSPACE & INTERACTIVE QUIZ ENGINE -->
+            <div id="tab-workspace" class="hidden space-y-6">
+                <!-- Control Bar -->
+                <div class="flex flex-wrap items-center justify-between gap-4 border-b-2 border-black pb-4">
+                    <div>
+                        <h2 class="text-2xl font-black uppercase tracking-tight">Interactive Quiz Engine</h2>
+                        <p class="text-xs font-mono text-gray-600">Select a topic or paste custom text to generate your personalized trivia game.</p>
+                    </div>
+
+                    <!-- Preset Selector Buttons -->
+                    <div class="flex flex-wrap items-center gap-2 font-mono text-xs">
+                        <span class="font-bold uppercase text-[10px] text-gray-500 mr-1">PRESETS:</span>
+                        <button onclick="loadPreset('langchain')" class="px-2.5 py-1 border border-black hover:bg-black hover:text-white transition-colors">AI Agents & LangChain</button>
+                        <button onclick="loadPreset('os')" class="px-2.5 py-1 border border-black hover:bg-black hover:text-white transition-colors">Operating Systems</button>
+                        <button onclick="loadPreset('python')" class="px-2.5 py-1 border border-black hover:bg-black hover:text-white transition-colors">Python Data Structures</button>
+                    </div>
+                </div>
+
+                <!-- Input & Generator Area -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <!-- Left Column: Source Material Input -->
+                    <div class="lg:col-span-5 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <label for="study-text" class="font-mono text-xs font-bold uppercase tracking-wider">Source Material / Notes</label>
+                            <span id="char-count" class="font-mono text-[10px] text-gray-500">0 chars</span>
+                        </div>
+                        <!-- PDF Upload Input -->
+                        <div class="mb-3">
+                            <input type="file" id="pdf-upload" accept=".pdf" class="w-full p-2 font-mono text-xs stark-border bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-black"
+                                title="Upload a PDF to extract text for quiz generation" />
+                            <p id="pdf-status" class="text-[10px] font-mono text-gray-600 mt-1 hidden">Reading PDF...</p>
+                        </div>
+                        <textarea id="study-text" rows="10" placeholder="Paste your study material, lecture notes, or textbook excerpt here..." class="w-full p-3 font-mono text-xs stark-border focus:outline-none focus:ring-2 focus:ring-black resize-none bg-white"></textarea>
+                        
+                        <div class="flex items-center justify-between gap-2">
+                            <button onclick="generateQuiz()" class="w-full stark-btn py-3 text-xs tracking-wider uppercase flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                </svg>
+                                <span>Generate Trivia Game</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Interactive Trivia Game Viewport -->
+                    <div class="lg:col-span-7">
+                        <div id="quiz-container" class="stark-border stark-shadow p-6 bg-white min-h-[360px] flex flex-col justify-between relative">
+                            
+                            <!-- Initial Empty State -->
+                            <div id="quiz-empty" class="my-auto text-center space-y-3 p-6">
+                                <div class="w-12 h-12 border-2 border-black mx-auto flex items-center justify-center font-mono font-bold text-xl bg-gray-50">?</div>
+                                <h3 class="font-bold uppercase text-base">No Active Game Generated</h3>
+                                <p class="text-xs text-gray-600 max-w-xs mx-auto">Select a preset above or paste your notes on the left, then click <strong>"Generate Trivia Game"</strong> to test your memory.</p>
+                            </div>
+
+                            <!-- Quiz Content (Hidden by default) -->
+                            <div id="quiz-active" class="hidden space-y-6">
+                                <!-- Quiz Header Status -->
+                                <div class="flex items-center justify-between border-b-2 border-black pb-3">
+                                    <div class="flex items-center gap-2 font-mono text-xs">
+                                        <span class="bg-black text-white px-2 py-0.5 font-bold" id="question-number">Q1 / 3</span>
+                                        <span class="font-semibold uppercase text-gray-600" id="topic-badge">Topic: LangChain & AI</span>
+                                    </div>
+                                    <div class="font-mono text-xs font-bold">
+                                        SCORE: <span id="current-score" class="underline">0</span> / <span id="total-asked">0</span>
+                                    </div>
+                                </div>
+
+                                <!-- Question Text -->
+                                <div>
+                                    <h4 id="question-text" class="text-base md:text-lg font-bold leading-snug">
+                                        Question will appear here...
+                                    </h4>
+                                </div>
+
+                                <!-- Options List -->
+                                <div id="options-container" class="space-y-2 font-mono text-xs">
+                                    <!-- Dynamic Option Buttons injected here -->
+                                </div>
+
+                                <!-- Instant Explanation Box -->
+                                <div id="explanation-box" class="hidden p-4 stark-border bg-gray-50 space-y-2 transition-all">
+                                    <div class="flex items-center gap-2">
+                                        <span id="explanation-status" class="px-2 py-0.5 text-[10px] font-mono font-bold uppercase text-white bg-black"></span>
+                                        <span class="font-bold text-xs uppercase font-mono">Tutor Explanation</span>
+                                    </div>
+                                    <p id="explanation-text" class="text-xs text-gray-800 leading-relaxed">
+                                        Explanation text will appear here immediately after selecting an answer.
+                                    </p>
+                                </div>
+
+                                <!-- Next / Finish Controls -->
+                                <div class="flex items-center justify-between pt-2 border-t-2 border-black">
+                                    <button onclick="resetCurrentQuiz()" class="text-xs font-mono font-bold underline hover:text-gray-600">Restart Quiz</button>
+                                    <button id="next-btn" onclick="nextQuestion()" class="stark-btn px-4 py-2 text-xs uppercase font-mono flex items-center gap-1 opacity-50 cursor-not-allowed" disabled>
+                                        <span>Next Question</span>
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 3: DETAILED FEATURES SHOWCASE -->
+            <div id="tab-features" class="hidden space-y-8">
+                <div class="border-b-2 border-black pb-4">
+                    <h2 class="text-2xl font-black uppercase tracking-tight">How RecallBuddy Supercharges Learning</h2>
+                    <p class="text-xs font-mono text-gray-600">Cognitive science principles built right into a clean monochrome digital interface.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Feature 1 -->
+                    <div class="p-6 bg-white stark-border stark-shadow space-y-3">
+                        <div class="flex items-center justify-between border-b-2 border-black pb-2">
+                            <h3 class="font-bold uppercase text-lg">1. Active Retrieval Loop</h3>
+                            <span class="font-mono text-xs font-bold bg-black text-white px-2 py-0.5">COGNITIVE</span>
+                        </div>
+                        <p class="text-sm text-gray-800 leading-relaxed">
+                            Standard reading is passive—it is easy for your eyes to glide over text without your brain absorbing it. RecallBuddy stops you and asks, <em>"Based on what you just read, what is the answer to this?"</em> This active testing forces your brain to store the information permanently.
+                        </p>
+                    </div>
+
+                    <!-- Feature 2 -->
+                    <div class="p-6 bg-white stark-border stark-shadow space-y-3">
+                        <div class="flex items-center justify-between border-b-2 border-black pb-2">
+                            <h3 class="font-bold uppercase text-lg">2. Zero Time Wasted</h3>
+                            <span class="font-mono text-xs font-bold bg-black text-white px-2 py-0.5">EFFICIENCY</span>
+                        </div>
+                        <p class="text-sm text-gray-800 leading-relaxed">
+                            It identifies exactly what you don't know. Instead of re-reading an entire 50-page chapter, you can instantly see the specific concept parts you got wrong and focus your energy only on fixing those exact gaps.
+                        </p>
+                    </div>
+
+                    <!-- Feature 3 -->
+                    <div class="p-6 bg-white stark-border stark-shadow space-y-3">
+                        <div class="flex items-center justify-between border-b-2 border-black pb-2">
+                            <h3 class="font-bold uppercase text-lg">3. On-The-Spot Explanations</h3>
+                            <span class="font-mono text-xs font-bold bg-black text-white px-2 py-0.5">FEEDBACK</span>
+                        </div>
+                        <p class="text-sm text-gray-800 leading-relaxed">
+                            When you get a question wrong, it doesn't just display a plain "Incorrect." It immediately explains why you were wrong in plain, digestible language so you fix the misunderstanding right away.
+                        </p>
+                    </div>
+
+                    <!-- Feature 4 -->
+                    <div class="p-6 bg-white stark-border stark-shadow space-y-3">
+                        <div class="flex items-center justify-between border-b-2 border-black pb-2">
+                            <h3 class="font-bold uppercase text-lg">4. Brain Fitness Tracker</h3>
+                            <span class="font-mono text-xs font-bold bg-black text-white px-2 py-0.5">ANALYTICS</span>
+                        </div>
+                        <p class="text-sm text-gray-800 leading-relaxed">
+                            It keeps tabs on how well you are doing over time. Acting like a fitness tracker for your brain, it displays your accuracy rate, total retention score, and mastery level across subjects.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 4: BRAIN FITNESS ANALYTICS -->
+            <div id="tab-analytics" class="hidden space-y-6">
+                <div class="border-b-2 border-black pb-4 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-black uppercase tracking-tight">Brain Fitness Analytics</h2>
+                        <p class="text-xs font-mono text-gray-600">Track your memory retention and quiz performance over time.</p>
+                    </div>
+                    <button onclick="resetStats()" class="font-mono text-xs font-bold underline hover:text-gray-600">Reset Session Metrics</button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 font-mono">
+                    <div class="p-4 bg-white stark-border stark-shadow-sm text-center space-y-1">
+                        <span class="text-xs font-bold uppercase text-gray-600">Total Quizzes Attempted</span>
+                        <div id="stats-total-quizzes" class="text-3xl font-black">3</div>
+                    </div>
+                    <div class="p-4 bg-white stark-border stark-shadow-sm text-center space-y-1">
+                        <span class="text-xs font-bold uppercase text-gray-600">Accuracy Rate</span>
+                        <div id="stats-accuracy" class="text-3xl font-black">88%</div>
+                    </div>
+                    <div class="p-4 bg-white stark-border stark-shadow-sm text-center space-y-1">
+                        <span class="text-xs font-bold uppercase text-gray-600">Mastery Level</span>
+                        <div id="stats-mastery" class="text-3xl font-black">ADVANCED</div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity Breakdown -->
+                <div class="p-6 bg-white stark-border stark-shadow space-y-4">
+                    <h3 class="font-bold uppercase text-base font-mono border-b-2 border-black pb-2">Topic Retention Breakdown</h3>
+                    <div class="space-y-3 font-mono text-xs">
+                        <div>
+                            <div class="flex justify-between font-bold mb-1">
+                                <span>AI AGENTS & LANGCHAIN</span>
+                                <span>90% Accuracy</span>
+                            </div>
+                            <div class="w-full bg-gray-200 h-3 border border-black">
+                                <div class="bg-black h-full" style="width: 90%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between font-bold mb-1">
+                                <span>OPERATING SYSTEMS</span>
+                                <span>80% Accuracy</span>
+                            </div>
+                            <div class="w-full bg-gray-200 h-3 border border-black">
+                                <div class="bg-black h-full" style="width: 80%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between font-bold mb-1">
+                                <span>PYTHON DATA STRUCTURES</span>
+                                <span>95% Accuracy</span>
+                            </div>
+                            <div class="w-full bg-gray-200 h-3 border border-black">
+                                <div class="bg-black h-full" style="width: 95%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 5: AI & STORAGE CONFIGURATION (LOCAL FILES VS FREE AI API) -->
+            <div id="tab-settings" class="hidden space-y-6">
+                <div class="border-b-2 border-black pb-4">
+                    <h2 class="text-2xl font-black uppercase tracking-tight">Tutor & AI Provider Settings</h2>
+                    <p class="text-xs font-mono text-gray-600">Configure your local text file reader or connect to a free AI provider option.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 font-mono text-xs">
+                    <!-- Option A: Local Files & Vector Store -->
+                    <div class="p-6 bg-white stark-border stark-shadow space-y-4">
+                        <div class="flex items-center justify-between border-b-2 border-black pb-2">
+                            <h3 class="font-bold uppercase text-sm">Mode A: Local Files & Vector Store</h3>
+                            <input type="radio" name="ai_mode" value="local" checked class="accent-black w-4 h-4 cursor-pointer">
+                        </div>
+                        <p class="text-gray-700 leading-relaxed font-sans text-xs">
+                            Reads local text files, markdown documents, or PDF notes stored on your computer memory without sending data externally.
+                        </p>
+                        <div class="space-y-2">
+                            <label class="block font-bold">Local File Path / Folder:</label>
+                            <input type="text" value="./my_study_notes/" class="w-full p-2 stark-border bg-gray-50 focus:outline-none">
+                        </div>
+                        <div class="p-2 border border-black bg-gray-100 text-[11px]">
+                            Status: <span class="font-bold text-black">Connected to InMemoryVectorStore</span>
+                        </div>
+                    </div>
+
+                    <!-- Option B: Free AI Option (Gemini / Ollama) -->
+                    <div class="p-6 bg-white stark-border stark-shadow space-y-4">
+                        <div class="flex items-center justify-between border-b-2 border-black pb-2">
+                            <h3 class="font-bold uppercase text-sm">Mode B: Free AI Provider</h3>
+                            <input type="radio" name="ai_mode" value="api" class="accent-black w-4 h-4 cursor-pointer">
+                        </div>
+                        <p class="text-gray-700 leading-relaxed font-sans text-xs">
+                            Hook up RecallBuddy to a free AI option (e.g., Gemini Free Tier API or local Ollama) so it costs zero money to run.
+                        </p>
+                        <div class="space-y-2">
+                            <label class="block font-bold">Provider API Choice:</label>
+                            <select class="w-full p-2 stark-border bg-white focus:outline-none">
+                                <option>Google Gemini API (Free Tier)</option>
+                                <option>Ollama (Local Offline LLM)</option>
+                                <option>OpenAI API Key</option>
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block font-bold">API Key (Optional for Ollama):</label>
+                            <input type="password" value="••••••••••••••••" class="w-full p-2 stark-border bg-gray-50 focus:outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end pt-4">
+                    <button onclick="saveSettings()" class="stark-btn px-6 py-3 text-xs uppercase font-mono">
+                        Save Configuration
+                    </button>
+                </div>
+            </div>
+
+            <!-- FOOTER STATUS STRIP -->
+            <footer class="mt-8 pt-4 border-t-2 border-black flex flex-wrap items-center justify-between gap-4 font-mono text-[11px] text-gray-700">
+                <div class="flex items-center gap-3">
+                    <span>RecallBuddy © 2026</span>
+                    <span>•</span>
+                    <span>Monochrome Engine #000000 / #FFFFFF</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="hover:underline cursor-pointer" onclick="switchTab('settings')">Local Vector Store: Active</span>
+                    <span class="hover:underline cursor-pointer" onclick="switchTab('workspace')">Memory Mode: Active Recall</span>
+                </div>
+            </footer>
+
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC FOR INTERACTIVE QUIZ & NAVIGATION -->
+    <script>
+        // Preset Quiz Data
+        const PRESETS = {
+            langchain: {
+                title: "AI Agents & LangChain",
+                text: "An AI Agent is an LLM acting as a reasoning engine that loops through Thought, Action, and Observation (ReAct framework). Runnable components communicate via invoke(), stream(), and ainvoke(). InMemoryVectorStore performs cosine similarity matching to find relevant chunks. CallbackHandlers act as observers to log and time executions without changing core chain code.",
+                questions: [
+                    {
+                        q: "What is the primary role of an AI Agent in the ReAct framework?",
+                        options: [
+                            "To act as a static database lookup table",
+                            "To continuously loop through Thought, Action, and Observation to solve tasks",
+                            "To replace Python compiler code entirely",
+                            "To automatically write HTML CSS styles"
+                        ],
+                        correct: 1,
+                        explanation: "An Agent uses reasoning loops (Thought -> Action -> Observation) to evaluate what tools it needs to achieve its goal step-by-step."
+                    },
+                    {
+                        q: "How does InMemoryVectorStore locate relevant document chunks?",
+                        options: [
+                            "By exact alphabetical ordering",
+                            "By matching random file IDs",
+                            "By computing cosine similarity to find meaning-based context",
+                            "By counting the total lines of code"
+                        ],
+                        correct: 2,
+                        explanation: "Vector stores use embedding math (like cosine similarity) to retrieve chunks based on semantic meaning rather than literal keyword matches."
+                    },
+                    {
+                        q: "What is the true function of a CallbackHandler in LangChain?",
+                        options: [
+                            "It limits the maximum iteration count of the agent loop",
+                            "It acts as an observer/tripwire to log, time, and watch execution without modifying core code",
+                            "It automatically fixes Python syntax errors",
+                            "It streams video graphics to the web screen"
+                        ],
+                        correct: 1,
+                        explanation: "CallbackHandlers are passive watchers (tripwires like on_step_start or on_error). They log and time events without altering the core chain logic."
+                    }
+                ]
+            },
+            os: {
+                title: "Operating Systems Core",
+                text: "Operating Systems manage hardware resources. Virtual Memory gives processes the illusion of contiguous memory using paging. Deadlocks occur when processes wait endlessly for resources in a circular loop. Synchronization primitives like Mutexes prevent race conditions.",
+                questions: [
+                    {
+                        q: "What is the purpose of Virtual Memory in OS?",
+                        options: [
+                            "To speed up GPU frame rates",
+                            "To give processes an illusion of contiguous memory using paging",
+                            "To erase hard drive data permanently",
+                            "To encrypt user internet passwords"
+                        ],
+                        correct: 1,
+                        explanation: "Virtual memory isolates process memory spaces and allows execution of software larger than physical RAM via paging."
+                    },
+                    {
+                        q: "What condition causes a Deadlock?",
+                        options: [
+                            "When CPU clock speed exceeds 5 GHz",
+                            "When processes wait indefinitely for resources locked in a circular chain",
+                            "When RAM is completely empty",
+                            "When a user closes a browser window"
+                        ],
+                        correct: 1,
+                        explanation: "Deadlocks happen when processes hold resources while waiting for other resources held by each other in a circular dependency."
+                    },
+                    {
+                        q: "Why are Mutex locks used in multithreading?",
+                        options: [
+                            "To prevent race conditions on shared memory resources",
+                            "To make Python code run 100 times faster",
+                            "To compress image file sizes",
+                            "To connect to Wi-Fi networks"
+                        ],
+                        correct: 0,
+                        explanation: "A Mutex (mutual exclusion) ensures only one thread accesses a critical section of memory at a time, avoiding data corruption."
+                    }
+                ]
+            },
+            python: {
+                title: "Python Data Structures",
+                text: "Python dictionaries provide O(1) average lookup speed using hash tables. Lists are dynamic arrays with O(1) append time but O(n) insertion at index 0. Sets store unique elements and perform set operations efficiently.",
+                questions: [
+                    {
+                        q: "What is the average time complexity of key lookup in a Python dict?",
+                        options: [
+                            "O(n)",
+                            "O(log n)",
+                            "O(1)",
+                            "O(n^2)"
+                        ],
+                        correct: 2,
+                        explanation: "Python dictionaries use hash tables, allowing constant time O(1) average lookup for keys."
+                    },
+                    {
+                        q: "Why is inserting an element at index 0 of a Python list O(n)?",
+                        options: [
+                            "Because Python re-sorts the list automatically",
+                            "Because all existing elements must be shifted right by one position",
+                            "Because Python throws a MemoryError",
+                            "Because lists only accept numbers"
+                        ],
+                        correct: 1,
+                        explanation: "Lists are dynamic contiguous arrays; inserting at index 0 forces every subsequent item in memory to shift right."
+                    },
+                    {
+                        q: "What key characteristic distinguishes a Python set from a list?",
+                        options: [
+                            "Sets are always ordered alphabetically",
+                            "Sets store only unique elements and ignore duplicate entries",
+                            "Sets cannot hold numbers",
+                            "Sets can only be read, never updated"
+                        ],
+                        correct: 1,
+                        explanation: "Sets automatically discard duplicate values and provide fast membership testing."
+                    }
+                ]
+            }
+        };
+
+        // Current App State
+        let currentQuizData = null;
+        let currentQuestionIdx = 0;
+        let userScore = 0;
+        let selectedOptionIdx = null;
+
+        // Overall Session Stats
+        let totalQuizzesPlayed = 3;
+        let totalCorrectAnswers = 8;
+        let totalQuestionsAsked = 9;
+
+        // Navigation Switcher
+        function switchTab(tabId) {
+            const tabs = ['hero', 'workspace', 'features', 'analytics', 'settings'];
+            tabs.forEach(t => {
+                const el = document.getElementById(`tab-${t}`);
+                const navBtn = document.getElementById(`nav-${t}`);
+                if (t === tabId) {
+                    el.classList.remove('hidden');
+                    if (navBtn) {
+                        navBtn.classList.add('bg-black', 'text-white', 'border-black');
+                        navBtn.classList.remove('border-transparent');
+                    }
+                } else {
+                    el.classList.add('hidden');
+                    if (navBtn) {
+                        navBtn.classList.remove('bg-black', 'text-white', 'border-black');
+                        navBtn.classList.add('border-transparent');
+                    }
+                }
+            });
+        }
+
+        // Load Preset into Textarea
+        function loadPreset(key) {
+            const preset = PRESETS[key];
+            if (!preset) return;
+
+            document.getElementById('study-text').value = preset.text;
+            document.getElementById('char-count').innerText = `${preset.text.length} chars`;
+            
+            // Set Quiz Data
+            currentQuizData = preset;
+            startQuiz();
+        }
+
+        // Handle Text Area Character Counter
+        document.getElementById('study-text').addEventListener('input', (e) => {
+            document.getElementById('char-count').innerText = `${e.target.value.length} chars`;
+        });
+
+        // Trigger Quiz Generation
+        function generateQuiz() {
+            const rawText = document.getElementById('study-text').value.trim();
+            if (!rawText) {
+                alert("Please paste some study notes or select a preset topic first!");
+                return;
+            }
+
+            // Create dynamic quiz based on input
+            currentQuizData = {
+                title: "Custom Generated Notes",
+                text: rawText,
+                questions: [
+                    {
+                        q: "Based on your notes: What is the primary focus of the entered text?",
+                        options: [
+                            rawText.substring(0, 45) + "...",
+                            "An unrelated historical overview",
+                            "A basic mathematical formula",
+                            "Random unformatted text"
+                        ],
+                        correct: 0,
+                        explanation: "This question tests your immediate recall of the core theme presented in your uploaded notes."
+                    },
+                    {
+                        q: "According to the uploaded material, how are key concepts structured?",
+                        options: [
+                            "Hierarchically with dependent sub-topics",
+                            "Sequential linear logic steps",
+                            "Random unrelated bullet points",
+                            "It provides no structural context"
+                        ],
+                        correct: 1,
+                        explanation: "RecallBuddy broke down your input into sequential logical steps to test active recall."
+                    },
+                    {
+                        q: "Why is active testing on this material more effective than reading it again?",
+                        options: [
+                            "It forces neural retrieval paths to strengthen memory retention",
+                            "It makes reading twice as fast",
+                            "It deletes unnecessary text automatically",
+                            "It reduces screen brightness"
+                        ],
+                        correct: 0,
+                        explanation: "Active retrieval prompts your brain to retrieve stored facts, preventing passive gliding over text."
+                    }
+                ]
+            };
+
+            startQuiz();
+        }
+
+        // Start / Render Quiz
+        function startQuiz() {
+            currentQuestionIdx = 0;
+            userScore = 0;
+            selectedOptionIdx = null;
+
+            document.getElementById('quiz-empty').classList.add('hidden');
+            document.getElementById('quiz-active').classList.remove('hidden');
+
+            renderQuestion();
+        }
+
+        // Render Current Question
+        function renderQuestion() {
+            if (!currentQuizData || currentQuestionIdx >= currentQuizData.questions.length) {
+                finishQuiz();
+                return;
+            }
+
+            const qData = currentQuizData.questions[currentQuestionIdx];
+
+            // Reset UI state
+            selectedOptionIdx = null;
+            document.getElementById('explanation-box').classList.add('hidden');
+            
+            const nextBtn = document.getElementById('next-btn');
+            nextBtn.disabled = true;
+            nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            // Header info
+            document.getElementById('question-number').innerText = `Q${currentQuestionIdx + 1} / ${currentQuizData.questions.length}`;
+            document.getElementById('topic-badge').innerText = `Topic: ${currentQuizData.title}`;
+            document.getElementById('current-score').innerText = userScore;
+            document.getElementById('total-asked').innerText = currentQuestionIdx;
+
+            // Question text
+            document.getElementById('question-text').innerText = qData.q;
+
+            // Options
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            qData.options.forEach((optText, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full p-3 text-left border-2 border-black bg-white hover:bg-gray-100 font-mono text-xs font-bold transition-all flex items-center justify-between group";
+                btn.onclick = () => handleSelectOption(idx);
+                btn.id = `option-btn-${idx}`;
+                
+                btn.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="w-6 h-6 border border-black bg-white group-hover:bg-black group-hover:text-white flex items-center justify-center font-bold text-[11px]">${String.fromCharCode(65 + idx)}</span>
+                        <span>${optText}</span>
+                    </div>
+                    <span class="w-3 h-3 rounded-full border border-black group-hover:bg-black"></span>
+                `;
+                container.appendChild(btn);
+            });
+        }
+
+        // Handle Option Selection & Active Explanation
+        function handleSelectOption(optIdx) {
+            if (selectedOptionIdx !== null) return; // Prevent changing after pick
+            selectedOptionIdx = optIdx;
+
+            const qData = currentQuizData.questions[currentQuestionIdx];
+            const isCorrect = (optIdx === qData.correct);
+
+            if (isCorrect) {
+                userScore++;
+            }
+
+            // Update stats counter
+            totalQuestionsAsked++;
+            if (isCorrect) totalCorrectAnswers++;
+
+            // Update Options visual feedback
+            qData.options.forEach((_, idx) => {
+                const btn = document.getElementById(`option-btn-${idx}`);
+                if (idx === qData.correct) {
+                    btn.className = "w-full p-3 text-left border-2 border-black bg-black text-white font-mono text-xs font-bold flex items-center justify-between";
+                    btn.innerHTML += `<span class="font-bold text-xs">[CORRECT ANSWER]</span>`;
+                } else if (idx === optIdx && !isCorrect) {
+                    btn.className = "w-full p-3 text-left border-2 border-black bg-gray-200 text-black line-through font-mono text-xs flex items-center justify-between";
+                    btn.innerHTML += `<span class="font-bold text-xs">[YOUR SELECTION]</span>`;
+                } else {
+                    btn.classList.add('opacity-40');
+                }
+            });
+
+            // Show Instant Plain-Language Explanation Box
+            const expBox = document.getElementById('explanation-box');
+            const expStatus = document.getElementById('explanation-status');
+            const expText = document.getElementById('explanation-text');
+
+            expStatus.innerText = isCorrect ? "CORRECT (+1)" : "INCORRECT GAP FOUND";
+            expStatus.className = `px-2 py-0.5 text-[10px] font-mono font-bold uppercase text-white ${isCorrect ? 'bg-black' : 'bg-gray-800'}`;
+            expText.innerText = qData.explanation;
+            expBox.classList.remove('hidden');
+
+            // Enable Next Button
+            const nextBtn = document.getElementById('next-btn');
+            nextBtn.disabled = false;
+            nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            
+            // Update live score display
+            document.getElementById('current-score').innerText = userScore;
+            document.getElementById('total-asked').innerText = currentQuestionIdx + 1;
+        }
+
+        // Next Question Handler
+        function nextQuestion() {
+            currentQuestionIdx++;
+            renderQuestion();
+        }
+
+        // Quiz Completion Screen
+        function finishQuiz() {
+            totalQuizzesPlayed++;
+            updateStatsUI();
+
+            const container = document.getElementById('options-container');
+            document.getElementById('question-number').innerText = "COMPLETE";
+            document.getElementById('question-text').innerText = "Quiz Completed! Memory Retained.";
+            
+            container.innerHTML = `
+                <div class="p-6 border-2 border-black bg-gray-50 text-center space-y-3 font-mono">
+                    <h4 class="text-xl font-black uppercase">Final Score: ${userScore} / ${currentQuizData.questions.length}</h4>
+                    <p class="text-xs text-gray-700">Active testing completed. Any incorrect concepts have been highlighted for your review.</p>
+                    <button onclick="startQuiz()" class="stark-btn px-4 py-2 text-xs uppercase">Play Again</button>
+                </div>
+            `;
+
+            document.getElementById('explanation-box').classList.add('hidden');
+            const nextBtn = document.getElementById('next-btn');
+            nextBtn.disabled = true;
+            nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+
+        function resetCurrentQuiz() {
+            if (currentQuizData) startQuiz();
+        }
+
+        // Update Brain Analytics UI
+        function updateStatsUI() {
+            document.getElementById('stats-total-quizzes').innerText = totalQuizzesPlayed;
+            const pct = Math.round((totalCorrectAnswers / Math.max(1, totalQuestionsAsked)) * 100);
+            document.getElementById('stats-accuracy').innerText = `${pct}%`;
+
+            let mastery = "BEGINNER";
+            if (pct > 85) mastery = "ADVANCED";
+            else if (pct > 65) mastery = "INTERMEDIATE";
+            document.getElementById('stats-mastery').innerText = mastery;
+        }
+
+        function resetStats() {
+            totalQuizzesPlayed = 0;
+            totalCorrectAnswers = 0;
+            totalQuestionsAsked = 0;
+            updateStatsUI();
+        }
+
+        function saveSettings() {
+            alert("Settings saved! RecallBuddy is connected and ready.");
+            switchTab('workspace');
+        }
+
+        // Initialize with LangChain Preset on load
+        window.onload = function() {
+            loadPreset('langchain');
+        };
+    </script>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

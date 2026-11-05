@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+jinja2
+python-multipart
+pypdf
+sentence-transformers
+langchain-community
+educhain-dks
+python-dotenv
+openai
