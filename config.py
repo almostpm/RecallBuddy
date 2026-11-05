@@ -4,7 +4,7 @@ import os
 
 from educhain.core.vectorstore import InMemoryVectorStore
 from educhain.models.llm import ChatModel
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
 
 DEFAULT_CHUNK_SIZE: int = 500
 
@@ -19,7 +19,7 @@ def build_vectorstore(chunks: list[str]) -> InMemoryVectorStore:
     if len(chunks) == 0:
         raise ValueError("chunks list is empty")
 
-    embedding_model = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+    embedding_model = FastEmbedEmbeddings(model_name="BAAI/bge-small-en-v1.5")
     store = InMemoryVectorStore(embedding_model=embedding_model)
     store.add_texts(chunks)
     return store
